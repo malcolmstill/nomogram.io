@@ -1,0 +1,14 @@
+#+TITLE: thunner: a Google Play Music curses client
+#+DESCRIPTION: Introducing my curses Google Play Music client
+#+KEYWORDS: python, gmusicapi
+#+DATE: <2013-03-06>
+
+/This is an old post from klltkr.com repeated here for completeness./
+
+In December I released a curses client allowing playback of music stored/purchased with Google Play. The client is written in python and uses [[http://www.simonmweber.com/][Simon Weber's]] [[https://github.com/simon-weber/Unofficial-Google-Music-API][unofficial Google Music API]]. Details can be found on [[https://github.com/nomogram/thunner][the github page]].
+
+It's still a [[https://github.com/nomogram/thunner/issues][work in progress]] but I have been able to use it as my sole music player.
+
+Here's a picture of what it looks like: Screenshot of thunner running in terminal
+[[file:thunner2.png]]
+Please check it out and feel free to suggest improvements.

@@ -1,0 +1,14 @@
+#+TITLE: I was born in a water moon
+#+DESCRIPTION: Welcome to my new blog
+#+KEYWORDS: meta, blog, nomogram.io
+#+DATE: <2011-11-17>
+
+/This is an old post from klltkr.com repeated here for completeness./
+
+Welcome to klltkr.com. The immediate goal of this blog is to discuss the Shen programming language released earlier this year. You can download the latest release from the official page where you will find a full list of features and documentation. Shen is a successor to and generalisation of the Qi programming language. Qi is hosted on top of Common Lisp where Shen is designed to be implemented on other backends. At the time of writing, a Javascript port is well underway by Kian Wilcox who is also planning an LLVM port.
+
+Being a fan of both Lisp (Common Lisp/Clojure) and OCaml, and often longing for pattern matching in the former, for me the real appeal of Shen is its combination of metaprogrammable S-expressions and pattern matching. Also, you can't like OCaml without liking strong static typing; Shen gives you this with a twist: Shen's type system is itself programmable leading to some interesting results. In the coming posts I'll likely concentrate on using macros and leveraging the type system in Shen.
+
+Along with Eric Schulte, I administer the Shen IRC channel, #shen, on Freenode (irc.freenode.net). Please connect and join the discussion.
+
+/Post title from The Algebraist by Iain M. Banks/

@@ -1,0 +1,31 @@
+#+TITLE: Konsole internal border
+#+DESCRIPTION: Faking internalBorder in Konsole.
+#+KEYWORDS: konsole, kde, qt
+#+DATE: <2013-07-15>
+
+/This is an old post from klltkr.com repeated here for completeness./
+
+Some terminal emulators, such as xterm and urxvt, allow an internal border to be defined, offsetting the terminal text from the edge of the window. I find this to be very aesthetically pleasing. As urxvt was giving me issues with copy and paste I thought I'd try using Konsole. Unfortunately Konsole has no equivalent option to internalBorder so I thought all hope was lost.
+
+However, recently I've been playing around with KDE and Qt and I happened upon this nugget of information: Qt applications can be styled with CSS and this can be applied by passing a stylesheet as a command-line option to the application:
+
+#+BEGIN_SRC bash
+konsole -stylesheet style.css
+#+END_SRC
+
+Then using the following stylesheet I can add a margin to the Konsole window and by setting the background colour to match the background colour Konsole uses for text I achieved the same effect as internalBorder on urxvt.
+
+#+BEGIN_SRC javascript
+QWidget {
+    margin: 9;
+    background-color: #eeeeee;
+}
+#+END_SRC
+
+Here's what my urxvt looks like: Screenshot of urxvt window with internalBorder
+[[file:urxvtborder1.png]]
+...and here's what Konsole looks like: Screenshot of konsole window with CSS stylsheet
+[[file:urxvtborder2.png]]
+Note also that I hide the tab bar and menu bar by default.
+
+Hope this helps someone.

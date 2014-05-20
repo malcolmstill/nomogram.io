@@ -1,0 +1,14 @@
+#+TITLE: I was born in a water moon redux
+#+DESCRIPTION: I'm back!
+#+KEYWORDS: meta
+#+DATE: <2013-03-06>
+
+/This is an old post from klltkr.com repeated here for completeness./
+
+So...I've not posted anything in over a year. Well now I'm back! Apart from having a busy 2012 I've been putting a lot of energy into redesigning the blog as the previous design was very basic.
+
+The new design is still minimalist but I've made it somewhat repsonsive and put a bit more thought into the typography. I'm using typekit to serve up some gorgeous web fonts, in particular I'm using Mark Simonson's Proxima Nova for body copy and headings and Adobe's Source Code Pro for inline code and code blocks.
+
+Also of note, the site is now entirely static where previously a PHP/MySQL backend served the pages. The site is now generated with wintersmith. Earlier iterations used Jekyll and statsis. Jekyll didn't seem flexible enough, especially if I wanted to host on github (no plugins are allowed). Stasis allowed for greater flexibility but I couldn't quite figure out how to bend it to my will. Recently I started playing around with node.js a bit which led me on to wintersmith which made it very easy to do what I wanted.
+
+The new site is not entirely complete but I wanted to finally upload it; inn the coming days/weeks/months I'll be tweaking the design. I intend to redouble my efforts in terms of writing posts. Hopefully I'll have more posts on Shen soon but I'll be writing about other topics too. Stay tuned.

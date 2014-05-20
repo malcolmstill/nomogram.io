@@ -1,0 +1,72 @@
+#+TITLE: No longer /In on the Kill Taker/
+#+DATE: <2014-05-11 Sun>
+
+* Welcome
+Since 2011 I've been authoring a blog over at [[http://www.klltkr.com][klltkr.com]]. The word /sporadic/ was invented to describe how often the blog was updated. I've been in the process of developing a new home here at [[http://www.nomogram.io][nomogram.io]] for a while now and I'd like to discuss some of the technology behind it now that it's finally ready for consumption.
+
+* Technology
+
+** Org-mode
+#+ATTR_HTML: :class raside
+#+BEGIN_ASIDE
+I even bought an [[http://orgmode.spreadshirt.de/][org-mode t-shirt]].
+#+END_ASIDE
+
+Of late I've been messing around with [[http://orgmode.org][org-mode]] -- using it to organise my life at work and at home. However, even though it is designed for organisation, org-mode makes a brilliant static site generator. The publishing facilities built in to org-mode allow one to write documents in a similar fashion to, say, markdown, and then export the documents to one of a number of backends---in this case the HTML backend (and automatically uploaded to my server using [[http://www.gnu.org/software/tramp/][TRAMP]]).
+
+In a future post (coming soon) I'll describe how I set up org to generate this site and some of the powerful features of org.
+
+#+BEGIN_QUOTE
+Org-mode is awesome, and if you don't agree you can fuck off!
+
+    -- Richard Dawkins on org-mode
+#+END_QUOTE
+
+** Nginx
+The website is served using [[http://nginx.org][nginx]] which is, thankfully, very simple to configure.
+
+** Typekit
+As with [[http://www.klltkr.com][klltkr.com]] I'm utilising [[http://typekit.com][Typekit]] to access gorgeous web fonts. In this case I've opted for even more minimalism and [[https://typekit.com/fonts/myriad-pro][Myriad Pro]] throughout (apart from source code which uses [[https://typekit.com/fonts/source-code-pro][Source Code Pro]]) and paid particular attention to line heights and line lengths.
+
+* Features
+#+BEGIN_SRC gnuplot :results none :file aside.svg
+  reset
+  
+  set terminal svg size 200,200 dynamic fname 'Myriad Pro, Verdana, Helvetica, Arial, sans-serif' \
+  fsize '7' rounded dashed
+  
+  set title "Putting it All Together"
+  
+  set xlabel "X"
+  set xrange [-8:8]
+  set xtics -8,2,8
+  
+  
+  set ylabel "Y"
+  set yrange [-20:70]
+  set ytics -20,10,70
+  
+  f(x) = x**2
+  g(x) = x**3
+  h(x) = 10*sqrt(abs(x))
+  
+  plot f(x) w lp lw 1, g(x) w p lw 2, h(x) w l lw 3
+#+END_SRC
+
+#+ATTR_HTML: :class laside
+#+BEGIN_ASIDE
+This is an aside inspired by [[http://www.edwardtufte.com/tufte/][Tufte]]. I can even include images in here!
+[[file:aside.svg]]
+#+END_ASIDE
+
+What follows are a few features of the new blog that I'm really chuffed with (as a reader) and which I've attempted to demo them in this post. A number of these features just fall out of using [[http://orgmode.org][org-mode]].
+- Even more minimalist design
+- Responsive design
+- Left- and right-hand asides
+- Quotes
+- Tables of contents -- not particularly useful on short posts but handy for longer, heavily sectioned articles.
+
+* Conclusion
+It's an absolute pleasure to use org-mode for publishing blog posts and with a bit of hacking, org-mode can produce lovely looking, functional web pages. Stay posted for more org-mode discussion.
+
+

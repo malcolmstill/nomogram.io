@@ -1,0 +1,399 @@
+#+TITLE: Typed lazy lists
+#+DESCRIPTION: An initial look at the Shen type system and how to implement Clojure-like infinite lazy lists.
+#+KEYWORDS: shen
+#+DATE: <2011-12-05>
+
+/This is an old post from klltkr.com repeated here for completeness./
+
+/Update: You can find the [[http://github.com/nomogram/shen-lazy-list][code for this post]] on [[http://github.com/nomogram][my github page]] which includes changes suggested by Mark Thom./
+
+Today I'm going to visit two topics that I've not covered yet: lazy evaluation and types. Personally, the type system is the hardest thing to get my head around and I hope to write a lot more on the subject.
+
+Lazy evaluation allows for the delay of evaluation until a required time. In Shen, lazy evalation is controlled with two functions: freeze and thaw. As the names suggest freeze delays evaluation and thaw evaluates a frozen expression.
+
+Let's jump into a REPL and try these out:
+
+#+BEGIN_SRC lisp
+(0-) (freeze 1)
+#&lt;FUNCTION \:LAMBDA NIL 1>
+
+(1-) (thaw (freeze 1))
+1
+#+END_SRC
+
+Note that (freeze ...) returns a function which is evaluated with thaw. This is almost the behaviour we get with a lambda (/.) except the returned function takes no parameters.
+
+What I want to try here is to implement Clojure-like lazy-sequences in Shen. I'm not fully versed in how Clojure lazy-sequences work but I should be able to at least achieve some approximation of their behaviour.
+
+The first function I'm going to implement is a lazy iterate. Iterate takes a function F and a value X and returns a lazy sequence of F applied to the previous value in the sequence: [X (F X) (F (F X)) (F (F (F X))) ...]. The definition of iterate is as follows:
+
+#+BEGIN_SRC lisp
+(define iterate
+  F X -> (freeze (cons X (iterate F (F X)))))
+#+END_SRC
+
+The (freeze (cons ...)) pattern will be common to these lazy sequence generators so let's clarify the notation with a macro:
+
+#+BEGIN_SRC lisp
+(defmacro lazy-cons-macro
+  [lazy-cons X Y] -> [freeze [cons X Y]])
+#+END_SRC
+
+The definition of iterate then becomes:
+
+#+BEGIN_SRC lisp
+(define iterate
+  F X -> (lazy-cons X (iterate F (F X))))
+#+END_SRC
+
+This version operates differently to Clojure's iterate in that if I evaluate (iterate sq 2) in Clojure the REPL will hang as it tries to evaluate and print an infinite list; in the Shen version iterate just returns a function.
+
+#+BEGIN_SRC lisp
+(5-) (iterate (+ 1) 0)
+#<COMPILED-FUNCTION iterate-1>
+#+END_SRC
+
+Now that we have a working iterate it would be useful to be able to take values from our infinite lists. We define take to do just this:
+
+#+BEGIN_SRC lisp
+(define take-rec
+  0 X Acc -> (reverse Acc)
+  N X Acc -> (let TX (thaw X)
+               (take-rec (- N 1) (tail TX) [(head TX) | Acc])))
+
+(define take
+  N X -> (take-rec N X []))
+
+(8-) (take 10 (iterate (+ 1) 0))
+[0 1 2 3 4 5 6 7 8 9]
+#+END_SRC
+
+Cool...but we can do better than that. Turning on the type checker will yield type errors as we've not supplied any type declarations. As lazy lists are something you might want to use in typed code it is sensible to supply types.
+
+Let's introduce a recursive type lazy-seq. lazy-seq will be polymorphic so that we have, for example, (lazy-seq number), (lazy-seq string). The definition of lazy-seq is:
+
+#+BEGIN_SRC lisp
+(datatype lazy-seq-type
+
+  X : (lazy (list A));
+  ___________________
+  X : (lazy-seq A);
+
+  X : A; Y : (lazy-seq A);
+  _______________________
+  (freeze (cons X Y)) : (lazy-seq A);)
+#+END_SRC
+
+#+BEGIN_SRC lisp
+(11+) (freeze (cons 1 (freeze (cons 2 ()))))
+#<FUNCTION :LAMBDA NIL (CONS 1 (freeze (CONS 2 NIL)))> : (lazy-seq number)
+#+END_SRC
+
+Now we can define a typed version of iterate:
+
+#+BEGIN_SRC lisp
+(define iterate
+  { (A --> A) --> A --> (lazy-seq A) }
+  F X -> (lazy-cons X (iterate F (F X))))
+#+END_SRC
+
+Similarly, we can redefine take-rec:
+
+#+BEGIN_SRC lisp
+(define take-rec
+  { number --> (lazy-seq A) --> (list A) --> (list A) }
+  0 X Acc -> (reverse Acc)
+  N X Acc -> (let TX (thaw X)
+               (take-rec (- N 1) (tail TX) [(head TX) | Acc])))
+#+END_SRC
+
+...but we have a problem. This doesn't type check because head and tail are typed to work only with (list A) types and thaw will only accept (lazy A) types. We need to promise the type checker that thaw can be applied to a lazy-seq and that head and tail can be applied to a thawed lazy-seq. lazy-seq can be redefined as follows:
+
+#+BEGIN_SRC lisp
+(datatype lazy-seq-type
+
+  X : (lazy (list A));
+  ___________________
+  X : (lazy-seq A);
+
+  X : A; Y : (lazy-seq A);
+  _______________________
+  (freeze (cons X Y)) : (lazy-seq A);
+
+  X : (lazy-seq A);
+  ________________
+  (thaw X) : (thawed-seq A);
+
+  X : (thawed-seq A);
+  __________________
+  (head X) : A;
+
+  X : (thawed-seq A);
+  __________________
+  (tail X) : (lazy-seq A);
+
+  X : (lazy-seq A);
+  ________________
+  (= (thaw X) []) : boolean;)
+#+END_SRC
+
+#+BEGIN_SRC lisp
+(15+) (thaw (iterate (+ 1) 0))
+[0 | #<COMPILED-FUNCTION iterate-1>] : (thawed-seq number)
+#+END_SRC
+
+The important thing to realise is that Shen doesn't just accept types for data structures but that any expression can be typed. The previous definition of take-rec now type checks and we define take as:
+
+#+BEGIN_SRC lisp
+(define take
+  { number --> (lazy-seq A) --> (list A) }
+  N X -> (take-rec N X []))
+#+END_SRC
+
+#+BEGIN_SRC lisp
+(19+) (take 10 (iterate (+ 1) 0))
+[0 1 2 3 4 5 6 7 8 9] : (list number)
+#+END_SRC
+
+Great! Let's try a lazy map:
+
+#+BEGIN_SRC lisp
+(define lmap
+  { (A --> B) --> (lazy-seq A) --> (lazy-seq B) }
+  F X -> (lazy-cons (F (head (thaw X))) (lmap F (tail (thaw X)))))
+#+END_SRC
+
+#+BEGIN_SRC lisp
+(21+) (take 10 (lmap (* 2) (iterate (+ 1) 0)))
+[0 2 4 6 8 10 12 14 16 18] : (list number)
+#+END_SRC
+
+The problem with take and lmap so far is that they only work with lazy sequences. What we'd really like is to apply take and lmap to lists as well as lazy sequences. To do this we'll introduce a new datatype seq that encompasses both list and lazy-seq types.
+
+#+BEGIN_SRC lisp
+(datatype seq-type
+
+  X : (list A);
+  ___________
+  X : (seq A);
+
+  X : (seq A);
+  ____________
+  (head X) : A;
+
+  X : (seq A);
+  ___________________
+  (tail X) : (list A);
+
+  X : (lazy-seq A);
+  ___________
+  X : (seq A);
+
+  X : (seq A);
+  ___________________
+  (head (thaw X)) : A;
+
+  X : (seq A);
+  _______________________________
+  (tail (thaw X)) : (lazy-seq A);)
+#+END_SRC
+
+Let's use this definition to define seq equivalents to head and tail; I'll call them first and rest. They are defined as follows:
+
+#+BEGIN_SRC lisp
+(define first
+  { (seq A) --> A }
+  X -> (head X) where (cons? X)
+  X -> (head (thaw X)))
+
+(define rest
+  { (seq A) --> (seq A) }
+  X -> (tail X) where (cons? X)
+  X -> (tail (thaw X)))
+#+END_SRC
+
+#+BEGIN_SRC lisp
+(25+) (first (iterate (+ 1) 0))
+0 : number
+
+(26+) (first [0 1 2 3])
+0 : number
+#+END_SRC
+
+There is an issue with the above in that (head X) and (head (thaw X)) will type check for either a list or a lazy-seq. This will yield a run-time error if we try, for example, (head (iterate (+ 1) 0)) or (head (thaw [1 2 3])). Here's a more type secure definition of seq using verified objects:
+
+#+BEGIN_SRC lisp
+(datatype seq-type
+
+  ____________________________________
+  (cons? X) : verified >> X : (list A);
+
+  X : (list A);
+  ___________
+  X : (seq A);
+
+  ____________________________________
+  (notcons? X) : verified >> X : (lazy-seq A);
+
+  X : (lazy-seq A);
+  ___________
+  X : (seq A);)
+
+(define notcons?
+  { A --> boolean }
+  X -> (not (cons? X)))
+#+END_SRC
+
+I've removed the (head X) an (head (thaw X)) types for a (seq A) and replaced them with a verified type for lists and lazy sequences. This allows the following redefined first and rest to type check:
+
+#+BEGIN_SRC lisp
+(define first
+  { (seq A) --> A }
+  X -> (head X) where (cons? X)
+  X -> (head (thaw X)) where (notcons? X))
+
+(define rest
+  { (seq A) --> (seq A) }
+  X -> (tail X) where (cons? X)
+  X -> (tail (thaw X)) where (notcons? X))
+#+END_SRC
+
+We can now go back and redefine take-rec, take and lmap to work on seq:
+
+#+BEGIN_SRC lisp
+(define take-rec
+  { number --> (seq A) --> (list A) --> (list A) }
+  0 X Acc -> (reverse Acc)
+  N [] Acc -> (reverse Acc)
+  N X Acc -> (take-rec (- N 1) (rest X) [(first X) | Acc]))
+
+(define take
+  { number --> (seq A) --> (list A) }
+  N X -> (take-rec N X []))
+
+(define lmap
+  { (A --> B) --> (seq A) --> (lazy-seq B) }
+  F X -> (lazy-cons (F (first X)) (lmap F (rest X))))
+#+END_SRC
+
+#+BEGIN_SRC lisp
+(34+) (take 2 [1 2 3])
+[1 2] : (list number)
+
+(35+) (take 2 (iterate (+ 1) 1))
+[1 2] : (list number)
+#+END_SRC
+
+There is a remaining issue where attempting to take N elements of a lazy-mapped list where N is greater than the length of the list will yield an error. We redefine rest to check if we have more elements or not and offer a new definition of lmap:
+
+#+BEGIN_SRC lisp
+(define rest-lazy-seq
+  { (lazy-seq A) --> (seq A) }
+  X -> [] where (= (thaw (tail (thaw X))) [])
+  X -> (tail (thaw X)))
+
+(define rest
+  { (seq A) --> (seq A) }
+  [] -> []
+  X -> (tail X) where (cons? X)
+  X -> (rest-lazy-seq X) where (notcons? X))
+
+(define lmap
+  { (A --> B) --> (seq A) --> (lazy-seq B) }
+  F [] -> (freeze [])
+  F X -> (lazy-cons (F (first X)) (lmap F (rest X))))
+#+END_SRC
+
+#+BEGIN_SRC lisp
+(39+) (take 10 [1 2 3])
+[1 2 3] : (list number)
+
+(40+) (take 10 (lmap (* 2) [1 2 3]))
+[2 4 6] : (list number)
+#+END_SRC
+
+Here's the final version of our lazy list code:
+
+#+BEGIN_SRC lisp
+(defmacro lazy-cons-macro
+  [lazy-cons X Y] -> [freeze [cons X Y]])
+
+(datatype lazy-seq-type
+
+  X : (lazy (list A));
+  ___________________
+  X : (lazy-seq A);
+
+  X : A; Y : (lazy-seq A);
+  _______________________
+  (freeze (cons X Y)) : (lazy-seq A);
+
+  X : (lazy-seq A);
+  ________________
+  (thaw X) : (thawed-seq A);
+
+  X : (thawed-seq A);
+  __________________
+  (head X) : A;
+
+  X : (thawed-seq A);
+  __________________
+  (tail X) : (lazy-seq A);
+
+  X : (lazy-seq A);
+  ________________
+  (= (thaw X) []) : boolean;)
+
+(datatype seq-type
+
+  ____________________________________
+  (cons? X) : verified >> X : (list A);
+
+  X : (list A);
+  ___________
+  X : (seq A);
+
+  ____________________________________
+  (notcons? X) : verified >> X : (lazy-seq A);
+
+  X : (lazy-seq A);
+  ___________
+  X : (seq A);)
+
+(define notcons?
+  { A --> boolean }
+  X -> (not (cons? X)))
+
+(define first
+  { (seq A) --> A }
+  X -> (head X) where (cons? X)
+  X -> (head (thaw X)) where (notcons? X))
+
+(define rest-lazy-seq
+  { (lazy-seq A) --> (seq A) }
+  X -> [] where (= (thaw (tail (thaw X))) [])
+  X -> (tail (thaw X)))
+
+(define rest
+  { (seq A) --> (seq A) }
+  [] -> []
+  X -> (tail X) where (cons? X)
+  X -> (rest-lazy-seq X) where (notcons? X))
+
+(define take-rec
+  { number --> (seq A) --> (list A) --> (list A) }
+  0 X Acc -> (reverse Acc)
+  N [] Acc -> (reverse Acc)
+  N X Acc -> (take-rec (- N 1) (rest X) [(first X) | Acc]))
+
+(define take
+  { number --> (seq A) --> (list A) }
+  N X -> (take-rec N X []))
+
+(define lmap
+  { (A --> B) --> (seq A) --> (lazy-seq B) }
+  F [] -> (freeze [])
+  F X -> (lazy-cons (F (first X)) (lmap F (rest X))))
+#+END_SRC
+
+There we have it, a basic implementation of typed lazy lists with a Clojure-like interface. I'm beginning to get a better feel for the type system and I hope this post will be of use to others. As always, let me know what you think in the comments below.
