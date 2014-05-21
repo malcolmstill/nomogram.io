@@ -6,6 +6,24 @@
 body {
     background-color: rgb(32,28,22);
     color: rgb(255,163,0);
+    text-shadow: 0 0 10px #FFA300;
+    font-family: "Myriad Pro", "myriad-pro", "sans-serif";
+    font-size: 10pt;
+}
+
+div {
+    position: absolute;
+    width: 470px;
+    height: 95px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
+
+table {
+    border-spacing: 20px 2px;
 }
 
 td {
@@ -13,53 +31,20 @@ td {
 }
 
 a {
-    color: #f4a223; /*rgb(255,163,0);*/
-}
-
-#c
-{
-  position: absolute;
-  margin: auto;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  width: 430px;
-  height: 105px;
-  font-family: "Myriad Pro", "myriad-pro", "sans-serif";
+    color: #f4a223;
 }
 
 #l {
-    float:left;
     font-family: "DIN condensed", "din-condensed-web";
+    font-size: 12pt;
     letter-spacing: 4.5px;
-    margin-right: 20px;
-    height: 100px;
-
-    text-shadow: 0 0 10px rgb(255,163,0);/*#c61a1a;*/
-    /*color: rgb(255,163,0);*/
-    /*color: rgb(255,163,0);*/
-    color: #f4a223; /*f69907*/
+    text-shadow: 0px 0px 10px #FFA300;
 }
 
 #sep {
-    width: 2px;
-    float: left;
-    height: 105px;
+    min-width: 2px;
+    height: 95px;
     box-shadow: 0 0 10px rgb(255,163,0);
-    background-color: #f4a223; /*rgb(255,163,0);*/
-    margin-right: 20px;
+    background-color: #f4a223;
 }
 
-td:first-child {
-    padding-right: 20px;
-}
-
-#r {
-    float: left;
-    font-size: 10pt;
-    text-shadow: 0 0 10px rgb(255,163,0);/*#c61a1a;*/
-    /*color: rgb(255,163,0);*/
-    /*color: rgb(255,163,0);*/
-    color: #f4a223; /*f69907*/
-}
