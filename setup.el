@@ -46,7 +46,7 @@
 	("nomo-local" :components ("nomo-local-static" "nomo-local-dynamic"))
 	("nomogram.io-static"
 	 :base-directory "~/nomogram.io"
-	 :base-extension "svg\\|css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
+	 :base-extension "html\\|svg\\|css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
 	 :publishing-directory nomogram-server
 	 :recursive t
 	 :publishing-function org-publish-attachment)
